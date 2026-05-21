@@ -1,0 +1,1348 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>5대 멀티 복습 단어 매니저 (프로 얼티밋 에디션)</title>
+    <style>
+        :root {
+            --primary: #4A90E2;
+            --danger: #E24A4A;
+            --success: #2ECC71;
+            --complete: #9B59B6;
+            --bg: #F5F7FA;
+            --dark: #333;
+            --card-bg: #fff;
+            --warning: #f39c12;
+            --border-color: #eee;
+            --text-color: #333;
+            --text-sub: #555;
+            --folder-bg: #eef2f7;
+            --mode-bg: #fff8e1;
+            --mode-border: #ffe082;
+            --card-border: #eef;
+            --ai-bg: #f3e5f5;
+            --ai-border: #d1c4e9;
+        }
+        [data-theme="dark"] {
+            --bg: #1a1c23;
+            --dark: #f5f7fa;
+            --card-bg: #242631;
+            --text-color: #f5f7fa;
+            --text-sub: #cbd5e1;
+            --border-color: #3f445b;
+            --folder-bg: #2d3142;
+            --mode-bg: #3a321d;
+            --mode-border: #6d561a;
+            --card-border: #3f445b;
+            --ai-bg: #2a1f3d;
+            --ai-border: #4a3b68;
+        }
+        * {
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            box-sizing: border-box;
+        }
+        input[type="text"], textarea, select {
+            -webkit-user-select: text;
+            user-select: text;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Malgun Gothic', sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-color);
+            transition: background-color 0.3s, color 0.3s;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .theme-toggle-container {
+            max-width: 550px;
+            width: 100%;
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 8px;
+        }
+        .theme-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            padding: 6px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .container {
+            background: var(--card-bg);
+            max-width: 550px;
+            width: 100%;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.06);
+            padding-bottom: 40px;
+            transition: background-color 0.3s, box-shadow 0.3s;
+        }
+        h2, h3 { text-align: center; color: var(--text-color); margin-top: 0; font-size: 20px; }
+        
+        /* 통계 대시보드 스타일에 적용 */
+        .dashboard {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 15px; text-align: center;
+        }
+        .dash-card {
+            background: var(--folder-bg); padding: 10px 5px; border-radius: 8px; border: 1px solid var(--border-color);
+        }
+        .dash-title { font-size: 11px; color: var(--text-sub); font-weight: bold; margin-bottom: 4px;}
+        .dash-value { font-size: 15px; font-weight: bold; color: var(--primary);}
+
+        .folder-section {
+            background: var(--folder-bg); padding: 12px; border-radius: 8px; margin-bottom: 15px;
+            display: flex; gap: 8px; align-items: center; justify-content: space-between;
+        }
+        .folder-section select { flex: 1; padding: 8px; border-radius: 4px; border: 1px solid var(--border-color); font-weight: bold; background: var(--card-bg); color: var(--text-color);}
+        .folder-btn { padding: 8px 10px; font-size: 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;}
+
+        .mode-section {
+            background: var(--mode-bg); border: 1px solid var(--mode-border); padding: 12px; border-radius: 8px; margin-bottom: 15px;
+            display: flex; flex-direction: column; gap: 8px;
+        }
+        .mode-row { display: flex; gap: 8px; align-items: center; justify-content: space-between; width: 100%; }
+        .mode-section select { flex: 1; padding: 8px; border-radius: 4px; border: 1px solid var(--mode-border); font-weight: bold; background: var(--card-bg); color: var(--text-color);}
+
+        .ai-section {
+            background: var(--ai-bg); border: 1px dashed var(--ai-border); padding: 15px; border-radius: 10px; margin-bottom: 20px;
+        }
+        .ai-section h4 { margin: 0 0 10px 0; font-size: 15px; color: var(--complete); display: flex; align-items: center; gap: 5px; }
+
+        .manage-section {
+            background: var(--card-bg); border: 1px dashed var(--border-color); padding: 15px; border-radius: 10px; margin-bottom: 20px;
+        }
+        .section-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;
+        }
+        .section-header h3 { margin: 0; font-size: 16px; }
+        
+        .clear-btn {
+            background: none; border: none; color: var(--danger); cursor: pointer; font-size: 12px; text-decoration: underline;
+        }
+        
+        .filter-btn-group {
+            display: flex; gap: 5px; margin-bottom: 8px; justify-content: flex-start; flex-wrap: wrap;
+        }
+        .filter-sub-btn {
+            background: var(--folder-bg); border: 1px solid var(--border-color); border-radius: 4px; font-size: 11px; padding: 3px 6px; cursor: pointer; color: var(--text-sub);
+        }
+        .filter-sub-btn.active-sort {
+            background: var(--primary); color: white; border-color: var(--primary);
+        }
+
+        .search-row {
+            display: flex; gap: 6px; margin-bottom: 10px;
+        }
+        .search-row input { flex: 1; padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 13px; background: var(--card-bg); color: var(--text-color); }
+
+        .input-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+        .input-row { display: flex; gap: 6px; }
+        .input-group input, .ai-section input { flex: 1; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 14px; background: var(--card-bg); color: var(--text-color); }
+        
+        .bulk-section {
+            margin-top: 10px; margin-bottom: 15px; background: var(--folder-bg); padding: 10px; border-radius: 6px; border: 1px solid var(--border-color);
+        }
+        .bulk-section textarea, .ai-section textarea {
+            width: 100%; height: 80px; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 13px; resize: none; background: var(--card-bg); color: var(--text-color);
+        }
+        
+        .word-list-box {
+            max-height: 200px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 6px; background: var(--card-bg); padding: 5px; margin-bottom: 10px;
+        }
+        .word-item {
+            display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border-bottom: 1px solid var(--border-color); font-size: 14px;
+        }
+        .word-item:last-child { border-bottom: none; }
+        
+        .word-info-wrapper { display: flex; align-items: center; gap: 8px; flex: 1; }
+        .word-checkbox { width: 16px; height: 16px; cursor: pointer; transform: scale(1.1); }
+        .dict-link { cursor: pointer; text-decoration: underline; }
+        
+        .action-btns { display: flex; gap: 5px; }
+        .action-btns button { border: none; background: none; cursor: pointer; font-weight: bold; font-size: 13px; padding: 2px 4px; }
+        .edit-btn { color: var(--warning); }
+        .move-btn { color: var(--primary); }
+        .del-btn { color: var(--danger); }
+        .tts-btn { background: var(--folder-bg); border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; padding: 4px 8px; margin-left: 5px; font-size: 13px; color: var(--text-color); }
+
+        .hint-container {
+            margin-top: 4px; font-size: 12px; color: var(--text-sub); display: flex; flex-direction: column; gap: 2px;
+        }
+        .translation-blind {
+            background: #e2e8f0; color: #4a5568; padding: 2px 8px; border-radius: 4px; display: inline-block; cursor: pointer; font-size: 11px; font-weight: bold; width: fit-content; user-select: none;
+        }
+        [data-theme="dark"] .translation-blind { background: #4a5568; color: #e2e8f0; }
+        .translation-text { display: none; margin-left: 4px; color: #2ecc71; font-weight: bold; }
+        .translation-text.show { display: inline; }
+
+        .step-indicator {
+            display: flex; justify-content: space-between; margin-bottom: 25px; background: var(--border-color); padding: 4px; border-radius: 20px;
+        }
+        .step { flex: 1; text-align: center; font-size: 11px; padding: 6px 0; color: #666; border-radius: 15px; }
+        .step.active { background: var(--primary); color: white; font-weight: bold; }
+        
+        .quiz-card-wrapper {
+            display: none;
+        }
+        .quiz-card-wrapper.active {
+            display: block;
+        }
+
+        .word-card {
+            background: var(--card-bg); padding: 20px; border-radius: 10px; margin-bottom: 15px; border: 1px solid var(--card-border); position: relative;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        label { display: block; margin-bottom: 12px; font-weight: bold; color: var(--text-sub); font-size: 15px; }
+        .word-card input[type="text"] { width: 100%; padding: 12px; border: 2px solid var(--border-color); border-radius: 6px; font-size: 16px; background: var(--card-bg); color: var(--text-color); }
+        
+        .quiz-options { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 10px; }
+        .option-btn {
+            text-align: left; padding: 12px; background: var(--card-bg); border: 2px solid var(--border-color); border-radius: 6px; font-size: 15px; cursor: pointer; font-weight: 500; color: var(--text-color);
+        }
+        .option-btn:hover { opacity: 0.9; background: var(--folder-bg); }
+        .option-btn.selected { background: #e3f2fd; border-color: var(--primary); color: #333; font-weight: bold; }
+
+        .sentence-box {
+            background: var(--folder-bg); padding: 12px; border-radius: 6px; margin: 8px 0; font-style: italic; color: var(--text-sub); line-height: 1.4; border-left: 4px solid var(--primary); font-size: 15px;
+        }
+
+        .scramble-container { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; min-height: 40px; background: var(--card-bg); padding: 8px; border-radius: 6px; border: 1px dashed var(--border-color); }
+        .word-bubble { background: var(--folder-bg); border: 1px solid var(--border-color); padding: 6px 12px; border-radius: 20px; font-size: 14px; cursor: pointer; user-select: none; color: var(--text-color); }
+        .word-bubble.used { background: var(--border-color); color: #888; cursor: default; pointer-events: none; }
+
+        .timer-container {
+            width: 100%; height: 6px; background: var(--border-color); border-radius: 3px; margin-bottom: 20px; overflow: hidden; display: none;
+        }
+        .timer-bar {
+            width: 100%; height: 100%; background: linear-gradient(to right, var(--primary), var(--danger)); transform-origin: left; transition: transform 0.1s linear;
+        }
+        .timeout-badge {
+            position: absolute; top: 15px; right: 15px; color: var(--danger); font-weight: bold; font-size: 13px; border: 1px solid var(--danger); padding: 2px 6px; border-radius: 4px; display: none;
+        }
+
+        .btn-group-container { display: flex; flex-direction: column; gap: 10px; margin-top: 25px; }
+        .btn {
+            width: 100%; padding: 15px; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; font-weight: bold; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .btn-primary { background: var(--primary); }
+        .btn-complete-quiz { background: var(--complete); }
+        .btn-flashcard { background: #e67e22; }
+        .btn-add { background: #333; padding: 10px 15px; border-radius: 4px; color: white; cursor: pointer; border: none; font-weight: bold; }
+        .btn-ai { background: var(--complete); padding: 10px 15px; border-radius: 6px; color: white; cursor: pointer; border: none; font-weight: bold; width: 100%; margin-top: 8px;}
+        [data-theme="dark"] .btn-add { background: #555; }
+        .wrong-text { color: var(--danger); font-weight: bold; text-decoration: line-through; }
+        .correct-text { color: var(--success); font-weight: bold; }
+        .hint { font-size: 13px; color: var(--text-sub); margin-bottom: 15px; text-align: center; }
+
+        .flashcard-wrapper { perspective: 1000px; margin: 30px auto; width: 280px; height: 200px; cursor: pointer; }
+        .flashcard-inner { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transition: transform 0.4s; }
+        .flashcard-inner.flipped { transform: rotateY(180deg); }
+        .card-front, .card-back {
+            position: absolute; width: 100%; height: 100%; backface-visibility: hidden;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            border-radius: 12px; border: 2px solid var(--border-color); box-shadow: 0 6px 12px rgba(0,0,0,0.05); padding: 10px;
+        }
+        .card-front { background: var(--card-bg); color: var(--primary); font-size: 28px; font-weight: bold; }
+        .card-back { background: var(--card-bg); color: var(--complete); font-size: 24px; font-weight: bold; transform: rotateY(180deg); }
+        .flash-controls { display: flex; justify-content: center; gap: 20px; align-items: center; margin-bottom: 15px; }
+
+        .calendar-section { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 12px; margin-top: 25px; }
+        .calendar-section h4 { margin: 0 0 10px 0; font-size: 14px; color: var(--text-sub); text-align: center;}
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; text-align: center; font-size: 11px;}
+        .calendar-day { padding: 6px 0; border-radius: 4px; color: var(--text-sub); background: var(--folder-bg);}
+        .calendar-day.has-grass { background: #2ecc71 !important; color: white !important; font-weight: bold;}
+        .calendar-header-row { font-weight: bold; color: #a0aec0; margin-bottom: 4px;}
+
+        .backup-section {
+            margin-top: 25px; border: 1px solid var(--border-color); background: var(--folder-bg); border-radius: 10px; padding: 15px; text-align: center;
+        }
+        .backup-btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .bk-btn { padding: 10px; font-size: 13px; font-weight: bold; border-radius: 6px; border: none; cursor: pointer; color: white; }
+    </style>
+</head>
+<body>
+
+<div class="theme-toggle-container">
+    <button class="theme-btn" onclick="toggleTheme()">🌓 테마 전환</button>
+</div>
+
+<div class="container">
+    <h2>4단계 단어 복습 매니저</h2>
+
+    <div class="dashboard" id="dashboard-box">
+        <div class="dash-card">
+            <div class="dash-title">🎓 단어 완수율</div>
+            <div class="dash-value" id="dash-progress">0%</div>
+        </div>
+        <div class="dash-card">
+            <div class="dash-title">🔥 연속 학습일</div>
+            <div class="dash-value" id="dash-streak">0일</div>
+        </div>
+        <div class="dash-card">
+            <div class="dash-title">🎯 최근 퀴즈</div>
+            <div class="dash-value" id="dash-score">-</div>
+        </div>
+    </div>
+
+    <div class="folder-section" id="folder-box">
+        <label style="font-size: 13px; font-weight:bold;">📁 폴더:</label>
+        <select id="folder-select" onchange="changeFolder(this.value)"></select>
+        <button class="folder-btn" style="background:#2ecc71; color:white;" onclick="createFolder()">+ 추가</button>
+        <button class="folder-btn" style="background:#e24a4a; color:white;" onclick="deleteCurrentFolder()">✕ 삭제</button>
+    </div>
+
+    <div class="mode-section" id="mode-box">
+        <div class="mode-row">
+            <label style="font-size: 13px; font-weight:bold; color:var(--warning);">🎯 퀴즈 타입:</label>
+            <select id="quiz-mode-select">
+                <option value="4step">기본 서술형 [4단계 마스터]</option>
+                <option value="choice">4지선다형 [객관식 퀴즈]</option>
+                <option value="sentence">예문 빈칸 채우기 [문맥 강화 퀴즈]</option>
+                <option value="scramble">로컬 어순 배열 [단어 조합 영작 퀴즈]</option>
+            </select>
+        </div>
+        <div class="mode-row" style="margin-top: 4px;">
+            <label style="font-size: 13px; font-weight:bold; color:var(--primary);">📝 출제 문항 수:</label>
+            <select id="quiz-limit-select">
+                <option value="all">선택 단어 전체</option>
+                <option value="5">5 문항</option>
+                <option value="10">10 문항</option>
+                <option value="20">20 문항</option>
+                <option value="50">50 문항</option>
+            </select>
+        </div>
+        <div class="mode-row" style="justify-content: flex-start; gap: 10px; margin-top: 4px; background: var(--card-bg); padding: 6px; border-radius: 4px; border: 1px solid var(--border-color);">
+            <input type="checkbox" id="use-speed-timer" style="transform: scale(1.2); cursor: pointer;">
+            <label for="use-speed-timer" style="margin:0; font-size: 12px; color: var(--danger); cursor: pointer; font-weight: bold;">⏱️ 10초 스피드 타이머 옵션 켜기</label>
+        </div>
+    </div>
+
+    <div class="ai-section" id="ai-scan-view">
+        <h4>✨ Gemini AI 사진 단어 스캔</h4>
+        <div style="margin-bottom: 8px;">
+            <input type="text" id="gemini-key" placeholder="Gemini API Key를 입력하세요" style="font-size: 12px;">
+        </div>
+        <div style="display: flex; gap: 6px; align-items: center; margin-bottom: 8px;">
+            <input type="file" id="ai-file-input" accept="image/*" style="font-size: 12px; display: none;" onchange="previewImageName(this)">
+            <button class="filter-sub-btn" style="padding: 8px 12px; background: var(--card-bg);" onclick="document.getElementById('ai-file-input').click()">📸 사진 찍기 / 파일 선택</button>
+            <span id="file-name-preview" style="font-size: 12px; color: var(--text-sub); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 150px;">선택 파일 없음</span>
+        </div>
+        <button class="btn-ai" id="ai-scan-btn" onclick="scanImageWithGemini()">⚡ 사진 속 단어 추출하기</button>
+        <div id="ai-result-box" style="margin-top: 10px; display: none;">
+            <span style="font-size:11px; font-weight:bold; color:var(--complete);">인식 결과 검토 (수정 가능):</span>
+            <textarea id="ai-extracted-text" style="height: 100px; margin-top: 4px;"></textarea>
+            <button class="btn-add" style="width:100%; background: var(--success); margin-top: 5px;" onclick="addScannedWords()">📥 추출된 단어장에 바로 등록</button>
+        </div>
+    </div>
+
+    <div class="manage-section" id="manager-view">
+        <div class="section-header">
+            <h3>📋 테스트 단어장 (<span id="test-count">0</span>)</h3>
+            <button class="clear-btn" onclick="clearAllWords('test')">🧹 전체 삭제</button>
+        </div>
+        <div class="input-group">
+            <div class="input-row">
+                <input type="text" id="new-eng" placeholder="영어 단어 (예: study)">
+                <input type="text" id="new-kor" placeholder="한글 뜻 (예: 공부하다)">
+            </div>
+            <div class="input-row">
+                <input type="text" id="new-sentence" placeholder="영어 예문 입력 (선택사항)">
+                <input type="text" id="new-translation" placeholder="예문 해석 입력 (선택사항)">
+                <button class="btn-add" onclick="addWord('test')">추가</button>
+            </div>
+        </div>
+        
+        <div class="bulk-section">
+            <span style="font-size:12px; font-weight:bold; color:#777; display:block; margin-bottom:5px;">✍️ 대량 단어 일괄 등록</span>
+            <div style="display:flex; gap:5px;">
+                <textarea id="bulk-input" placeholder="형식: 단어:뜻:예문:해석&#10;(줄바꿈으로 여러 개 입력 가능)"></textarea>
+                <button class="btn-add" onclick="addBulkWords()" style="font-size:12px;">일괄 등록</button>
+            </div>
+        </div>
+
+        <div class="search-row">
+            <input type="text" id="word-search-input" placeholder="🔍 단어 철자 또는 뜻 실시간 검색..." oninput="updateWordList()">
+        </div>
+        <div class="filter-btn-group">
+            <button class="filter-sub-btn active-sort" id="sort-recent" onclick="changeSortOrder('recent')">⏱️ 최신순</button>
+            <button class="filter-sub-btn" id="sort-abc" onclick="changeSortOrder('abc')">🔤 알파벳순</button>
+            <button class="filter-sub-btn" id="sort-kor" onclick="changeSortOrder('kor')">🇰🇷 뜻 가나다순</button>
+        </div>
+
+        <div class="filter-btn-group" style="margin-top: 5px; border-top: 1px dashed var(--border-color); padding-top: 8px;">
+            <button class="filter-sub-btn" onclick="toggleAllCheckboxes('test', true)">☑ 전체 선택</button>
+            <button class="filter-sub-btn" onclick="toggleAllCheckboxes('test', false)">☐ 전체 해제</button>
+        </div>
+        <div class="word-list-box" id="word-list-container"></div>
+
+        <div class="section-header" style="margin-top: 20px;">
+            <h3 style="color: var(--complete);">✅ 완료된 단어 보관함 (<span id="complete-count">0</span>)</h3>
+            <button class="clear-btn" onclick="clearAllWords('complete')">🧹 보관함 비우기</button>
+        </div>
+        <div class="word-list-box" id="complete-list-container" style="border-color: #e8d7f2;"></div>
+    </div>
+
+    <div class="step-indicator" id="step-bar" style="display: none;">
+        <div class="step active" id="s1">1. 뜻 쓰기</div>
+        <div class="step" id="s2">2. 철자 쓰기</div>
+        <div class="step" id="s3">3. 오답 체크</div>
+        <div class="step" id="s4">4. 오답 재복습</div>
+    </div>
+
+    <div class="timer-container" id="quiz-timer-container">
+        <div class="timer-bar" id="quiz-timer-bar"></div>
+    </div>
+
+    <div id="quiz-content"></div>
+    
+    <div class="btn-group-container" id="btn-group">
+        <button class="btn btn-primary" id="next-btn" onclick="nextStep('test')">📋 테스트 단어 퀴즈 시작</button>
+        <button class="btn btn-flashcard" id="flash-btn" onclick="startFlashcardMode()">🃏 플래시 카드 암기 시작</button>
+        <button class="btn btn-complete-quiz" id="complete-quiz-btn" onclick="nextStep('complete')">✅ 완료된 단어 퀴즈 시작</button>
+    </div>
+
+    <div class="calendar-section" id="calendar-box">
+        <h4 id="calendar-title">📅 이번 달 학습 잔디밭</h4>
+        <div class="calendar-grid calendar-header-row">
+            <div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div>
+        </div>
+        <div class="calendar-grid" id="calendar-days-container"></div>
+    </div>
+
+    <div class="backup-section" id="backup-box">
+        <span style="font-size:13px; font-weight:bold; color:var(--text-sub);">💾 단어장 데이터 백업 및 복구 관리</span>
+        <div class="backup-btn-grid">
+            <button class="bk-btn" style="background: #34495e;" onclick="exportDataJSON()">📥 데이터 백업</button>
+            <button class="bk-btn" style="background: #16a085;" onclick="document.getElementById('import-file-input').click()">📤 데이터 복구</button>
+        </div>
+        <input type="file" id="import-file-input" accept=".json" style="display:none;" onchange="importDataJSON(this)">
+    </div>
+</div>
+
+<script>
+    let folders = JSON.parse(localStorage.getItem("word_folders")) || { "기본 폴더": { original: [], completed: [] } };
+    let currentFolderName = localStorage.getItem("current_folder") || "기본 폴더";
+    let grassDates = JSON.parse(localStorage.getItem("grass_dates")) || [];
+    let currentTheme = localStorage.getItem("app_theme") || "light";
+    let savedApiKey = localStorage.getItem("gemini_api_key") || "";
+    let lastQuizScore = localStorage.getItem("last_quiz_score") || "-";
+    let currentSortOrder = "recent"; // 정렬 방식 추적 변수
+
+    if (!folders[currentFolderName]) { currentFolderName = Object.keys(folders)[0]; }
+
+    let originalWords = folders[currentFolderName].original;
+    let completedWords = folders[currentFolderName].completed;
+
+    let quizWords = [];      
+    let userAnswers = [];    
+    let wrongWords = [];     
+    let reviewAnswers = [];  
+    let currentStep = 0;     
+    let currentQuizMode = 'test'; 
+    let flashIndex = 0;
+    let selectedQuizType = '4step';
+    let currentCardIndex = 0;
+
+    let timerInterval = null;
+    const TIME_LIMIT = 10; 
+    let isTimeoutActive = false;
+
+    const localTemplates = [
+        { sent: "I want to understand this [W].", trans: "나는 이 [K]을(를) 이해하고 싶다." },
+        { sent: "Do you know the meaning of [W]?", trans: "너는 [K]의 의미를 알고 있니?" },
+        { sent: "It is important to remember this [W].", trans: "이 [K]을(를) 기억하는 것은 중요하다." },
+        { sent: "She wrote the word [W] on the board.", trans: "그녀는 칠판에 [W]라는 단어를 적었다." },
+        { sent: "We can practice [W] together every day.", trans: "우리는 매일 함께 [W]을(를) 연습할 수 있다." },
+        { sent: "This book helps me learn [W] easily.", trans: "이 책은 내가 [W]을(를) 쉽게 배우도록 도와준다." }
+    ];
+
+    document.documentElement.setAttribute("data-theme", currentTheme);
+    if(savedApiKey) { document.getElementById("gemini-key").value = savedApiKey; }
+
+    function toggleTheme() {
+        currentTheme = (currentTheme === "light") ? "dark" : "light";
+        document.documentElement.setAttribute("data-theme", currentTheme);
+        localStorage.setItem("app_theme", currentTheme);
+    }
+
+    function previewImageName(input) {
+        const span = document.getElementById("file-name-preview");
+        if(input.files && input.files[0]) { span.innerText = input.files[0].name; } else { span.innerText = "선택 파일 없음"; }
+    }
+
+    function exportDataJSON() {
+        const dataStr = JSON.stringify({
+            word_folders: folders,
+            current_folder: currentFolderName,
+            grass_dates: grassDates,
+            last_quiz_score: lastQuizScore
+        }, null, 2);
+        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+        const exportFileDefaultName = 'word_backup.json';
+        
+        const linkElement = document.createElement('a');
+        linkElement.setAttribute('href', dataUri);
+        linkElement.setAttribute('download', exportFileDefaultName);
+        linkElement.click();
+    }
+
+    function importDataJSON(input) {
+        if (!input.files || !input.files[0]) return;
+        const file = input.files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const parsedData = JSON.parse(e.target.result);
+                if (parsedData.word_folders) {
+                    folders = parsedData.word_folders;
+                    currentFolderName = parsedData.current_folder || Object.keys(folders)[0];
+                    grassDates = parsedData.grass_dates || [];
+                    lastQuizScore = parsedData.last_quiz_score || "-";
+                    
+                    originalWords = folders[currentFolderName].original || [];
+                    completedWords = folders[currentFolderName].completed || [];
+                    
+                    saveToLocalStorage();
+                    renderFolderSelect();
+                    updateWordList();
+                    renderCalendar();
+                    alert("🎉 단어장 데이터가 성공적으로 정상 복원되었습니다!");
+                } else {
+                    alert("올바른 백업 형식이 아닙니다.");
+                }
+            } catch (err) {
+                alert("파일 읽기 에러: JSON 파일 구조를 확인하세요.");
+            }
+        };
+        reader.readAsText(file);
+        input.value = "";
+    }
+
+    async function scanImageWithGemini() {
+        const apiKey = document.getElementById("gemini-key").value.trim();
+        const fileInput = document.getElementById("ai-file-input");
+        const scanBtn = document.getElementById("ai-scan-btn");
+
+        if(!apiKey) return alert("Gemini API Key를 입력하셔야 사진 인식이 가능합니다!");
+        if(!fileInput.files || !fileInput.files[0]) return alert("촬영하거나 스캔할 이미지 파일을 선택해 주세요.");
+
+        localStorage.setItem("gemini_api_key", apiKey);
+        scanBtn.innerText = "⏳ AI 분석 중... 잠시만 기다려주세요...";
+        scanBtn.disabled = true;
+
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        reader.onloadend = async function() {
+            const base64Data = reader.result.split(',')[1];
+            const mimeType = file.type;
+
+            const promptText = "이 사진에서 감지되는 영어 단어들을 공부용 단어장 형태로 추출해줘. 불필요한 서론/결론 생략하고 무조건 다음 포맷으로만 한 줄씩 출력해줘. 여러 개면 줄바꿈해줘. 포맷: 단어:뜻:영어예문:예문한국어해석";
+
+            const payload = {
+                contents: [{
+                    parts: [
+                        { text: promptText },
+                        { inlineData: { mimeType: mimeType, data: base64Data } }
+                    ]
+                }]
+            };
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await response.json();
+                if(data.candidates && data.candidates[0].content.parts[0].text) {
+                    const resultText = data.candidates[0].content.parts[0].text.trim();
+                    document.getElementById("ai-extracted-text").value = resultText;
+                    document.getElementById("ai-result-box").style.display = "block";
+                } else {
+                    alert("단어를 추출해내지 못했습니다. 사진 구도를 다시 맞춰보세요.");
+                }
+            } catch(e) {
+                console.error(e);
+                alert("Gemini API 호출 에러.");
+            } finally {
+                scanBtn.innerText = "⚡ 사진 속 단어 추출하기";
+                scanBtn.disabled = false;
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function addScannedWords() {
+        const txt = document.getElementById("ai-extracted-text").value.trim();
+        if(!txt) return;
+        const lines = txt.split('\n'); let count = 0;
+        lines.forEach(line => {
+            const parts = line.split(':');
+            if (parts.length >= 2 && parts[0].trim() && parts[1].trim()) {
+                originalWords.push({ 
+                    eng: parts[0].trim(), 
+                    kor: parts[1].trim(), 
+                    sentence: parts[2] ? parts[2].trim() : "", 
+                    translation: parts[3] ? parts[3].trim() : "", 
+                    checked: true,
+                    timestamp: Date.now() + count // 순서 보존용 타임스탬프
+                });
+                count++;
+            }
+        });
+        if(count > 0) {
+            saveToLocalStorage(); updateWordList();
+            document.getElementById("ai-result-box").style.display = "none";
+            document.getElementById("ai-extracted-text").value = "";
+            document.getElementById("file-name-preview").innerText = "선택 파일 없음";
+            document.getElementById("ai-file-input").value = "";
+            alert(`AI가 추출한 ${count}개의 단어가 단어장에 등록되었습니다!`);
+        }
+    }
+
+    function getLocalData(word, kor) {
+        const idx = word.length % localTemplates.length;
+        let s = localTemplates[idx].sent.replace("[W]", word);
+        let t = localTemplates[idx].trans.replace("[K]", kor).replace("[W]", word);
+        return { sentence: s, translation: t };
+    }
+
+    function toggleTranslation(idx) {
+        const target = document.getElementById(`trans-${idx}`);
+        if(target) target.classList.toggle('show');
+    }
+
+    function saveToLocalStorage() {
+        folders[currentFolderName].original = originalWords;
+        folders[currentFolderName].completed = completedWords;
+        localStorage.setItem("word_folders", JSON.stringify(folders));
+        localStorage.setItem("current_folder", currentFolderName);
+        localStorage.setItem("grass_dates", JSON.stringify(grassDates));
+        localStorage.setItem("last_quiz_score", lastQuizScore);
+    }
+
+    function renderFolderSelect() {
+        const select = document.getElementById("folder-select");
+        select.innerHTML = Object.keys(folders).map(name => `<option value="${name}" ${name === currentFolderName ? 'selected' : ''}>${name}</option>`).join("");
+    }
+    renderFolderSelect();
+
+    function changeFolder(name) {
+        if(currentStep !== 0) return alert("퀴즈 진행 중에는 폴더 전환이 불가능합니다.");
+        currentFolderName = name;
+        originalWords = folders[currentFolderName].original || [];
+        completedWords = folders[currentFolderName].completed || [];
+        saveToLocalStorage(); updateWordList();
+    }
+
+    function createFolder() {
+        const name = prompt("새 폴더 이름을 입력하세요:");
+        if(!name || !name.trim()) return;
+        if(folders[name.trim()]) return alert("중복된 폴더명입니다.");
+        folders[name.trim()] = { original: [], completed: [] };
+        currentFolderName = name.trim(); originalWords = folders[currentFolderName].original; completedWords = folders[currentFolderName].completed;
+        saveToLocalStorage(); renderFolderSelect(); updateWordList();
+    }
+
+    function deleteCurrentFolder() {
+        if(Object.keys(folders).length <= 1) return alert("최소 한 개의 폴더는 유지해야 합니다.");
+        if(!confirm(`[${currentFolderName}] 폴더를 삭제하시겠습니까?`)) return;
+        delete folders[currentFolderName]; currentFolderName = Object.keys(folders)[0];
+        originalWords = folders[currentFolderName].original; completedWords = folders[currentFolderName].completed;
+        saveToLocalStorage(); renderFolderSelect(); updateWordList();
+    }
+
+    function speak(text) {
+        if (!window.speechSynthesis) return;
+        window.speechSynthesis.cancel();
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = 'en-US'; u.rate = 0.9; window.speechSynthesis.speak(u);
+    }
+
+    function openNaverDict(word) { window.open(`https://dict.naver.com/enkodict/#/search?query=${encodeURIComponent(word)}`, '_blank'); }
+
+    function handleCheckboxChange(type, id, isChecked) {
+        let list = (type === 'test') ? originalWords : completedWords;
+        let item = list.find(w => w.timestamp === id || (w.eng === id && w.kor === id)); // 매칭용
+        if(item) item.checked = isChecked;
+        saveToLocalStorage();
+    }
+
+    function toggleAllCheckboxes(type, status) {
+        let list = (type === 'test') ? originalWords : completedWords;
+        list.forEach(w => w.checked = status); saveToLocalStorage(); updateWordList();
+    }
+
+    // 신규: 정렬 정렬 필터 변경 함수
+    function changeSortOrder(order) {
+        currentSortOrder = order;
+        document.querySelectorAll(".filter-sub-btn").forEach(btn => btn.classList.remove("active-sort"));
+        if(order === 'recent') document.getElementById("sort-recent").classList.add("active-sort");
+        if(order === 'abc') document.getElementById("sort-abc").classList.add("active-sort");
+        if(order === 'kor') document.getElementById("sort-kor").classList.add("active-sort");
+        updateWordList();
+    }
+
+    // 신규: 통계 대시보드 계산 수치 갱신 함수
+    function calculateStatistics() {
+        const total = originalWords.length + completedWords.length;
+        const progressPercent = total === 0 ? 0 : Math.round((completedWords.length / total) * 100);
+        document.getElementById("dash-progress").innerText = `${progressPercent}%`;
+        document.getElementById("dash-score").innerText = lastQuizScore;
+
+        // 연속 학습일(Streak) 런타임 계산 알고리즘
+        let streak = 0;
+        let checkDate = new Date();
+        while (true) {
+            let dateStr = checkDate.toISOString().split('T')[0];
+            if (grassDates.includes(dateStr)) {
+                streak++;
+                checkDate.setDate(checkDate.getDate() - 1);
+            } else {
+                // 오늘 잔디가 없고 어제 잔디는 있는 경우를 감안
+                if (streak === 0) {
+                    checkDate.setDate(checkDate.getDate() - 1);
+                    let yesterdayStr = checkDate.toISOString().split('T')[0];
+                    if (grassDates.includes(yesterdayStr)) {
+                        streak = 1;
+                        checkDate.setDate(checkDate.getDate() - 1);
+                        continue;
+                    }
+                }
+                break;
+            }
+        }
+        document.getElementById("dash-streak").innerText = `${streak}일`;
+    }
+
+    function updateWordList() {
+        calculateStatistics(); // 리스트 갱신할 때 대시보드도 동시 갱신
+        
+        const testContainer = document.getElementById("word-list-container");
+        const completeContainer = document.getElementById("complete-list-container");
+        document.getElementById("test-count").innerText = originalWords.length;
+        document.getElementById("complete-count").innerText = completedWords.length;
+
+        const searchKeyword = document.getElementById("word-search-input").value.toLowerCase().trim();
+
+        // 정렬 및 필터가 적용될 복사본 생성
+        let displayTestList = [...originalWords];
+
+        // 1. 실시간 검색 필터 적용
+        if(searchKeyword) {
+            displayTestList = displayTestList.filter(w => 
+                w.eng.toLowerCase().includes(searchKeyword) || 
+                w.kor.toLowerCase().includes(searchKeyword)
+            );
+        }
+
+        // 2. 정렬 필터 기준 선별 작동
+        if(currentSortOrder === 'abc') {
+            displayTestList.sort((a,b) => a.eng.localeCompare(b.eng));
+        } else if(currentSortOrder === 'kor') {
+            displayTestList.sort((a,b) => a.kor.localeCompare(b.kor));
+        } else {
+            // 최근 등록순 (타임스탬프 역순 역정렬)
+            displayTestList.sort((a,b) => (b.timestamp || 0) - (a.timestamp || 0));
+        }
+
+        if (displayTestList.length === 0) {
+            testContainer.innerHTML = `<div style="color:#999; text-align:center; padding:10px; font-size:13px;">조건에 맞는 단어가 없습니다.</div>`;
+        } else {
+            let html = "";
+            displayTestList.forEach((word) => {
+                const isChecked = word.checked !== false ? "checked" : "";
+                const uniqueId = word.timestamp || word.eng;
+                let displaySent = word.sentence; let displayTrans = word.translation;
+                if(!displaySent) { let auto = getLocalData(word.eng, word.kor); displaySent = auto.sentence; displayTrans = auto.translation; }
+                
+                // 본래 배열 originalWords 기준에서의 실제 인덱스 찾기
+                const actualIdx = originalWords.findIndex(w => w === word);
+
+                html += `<div class="word-item" style="flex-direction:column; align-items:flex-start; gap:4px;">
+                    <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
+                        <div class="word-info-wrapper">
+                            <input type="checkbox" class="word-checkbox" ${isChecked} onchange="handleCheckboxChange('test', ${uniqueId}, this.checked)">
+                            <span><strong class="dict-link" onclick="openNaverDict('${word.eng}')">${word.eng}</strong> <button class="tts-btn" onclick="speak('${word.eng}')">🔊</button> ➔ ${word.kor}</span>
+                        </div>
+                        <div class="action-btns">
+                            <button class="edit-btn" onclick="editWord('test', ${actualIdx})">✏️</button>
+                            <button class="move-btn" onclick="moveWord('toComplete', ${actualIdx})">➔ 완료</button>
+                            <button class="del-btn" onclick="deleteWord('test', ${actualIdx})">✕</button>
+                        </div>
+                    </div>
+                    <div class="hint-container">
+                        <div>📖 ${displaySent}</div>
+                        <div><span class="translation-blind" onclick="toggleTranslation('list-t-${uniqueId}')">📄 해석 보기</span><span class="translation-text" id="trans-list-t-${uniqueId}"> ${displayTrans}</span></div>
+                    </div>
+                </div>`;
+            });
+            testContainer.innerHTML = html;
+        }
+
+        if (completedWords.length === 0) {
+            completeContainer.innerHTML = `<div style="color:#999; text-align:center; padding:10px; font-size:13px;">보관함이 비어있습니다.</div>`;
+        } else {
+            let html = "";
+            completedWords.forEach((word, index) => {
+                const isChecked = word.checked !== false ? "checked" : "";
+                const uniqueId = word.timestamp || index;
+                let displaySent = word.sentence; let displayTrans = word.translation;
+                if(!displaySent) { let auto = getLocalData(word.eng, word.kor); displaySent = auto.sentence; displayTrans = auto.translation; }
+                html += `<div class="word-item" style="flex-direction:column; align-items:flex-start; gap:4px;">
+                    <div style="display:flex; justify-content:space-between; width:100%; align-items:center;">
+                        <div class="word-info-wrapper">
+                            <input type="checkbox" class="word-checkbox" ${isChecked} onchange="handleCheckboxChange('complete', ${uniqueId}, this.checked)">
+                            <span><strong style="color:var(--complete);" class="dict-link" onclick="openNaverDict('${word.eng}')">${word.eng}</strong> <button class="tts-btn" onclick="speak('${word.eng}')">🔊</button> ➔ ${word.kor}</span>
+                        </div>
+                        <div class="action-btns">
+                            <button class="edit-btn" onclick="editWord('complete', ${index})">✏️</button>
+                            <button class="move-btn" onclick="moveWord('toTest', ${index})">↩ 복귀</button>
+                            <button class="del-btn" onclick="deleteWord('complete', ${index})">✕</button>
+                        </div>
+                    </div>
+                    <div class="hint-container">
+                        <div style="color:var(--complete);">📖 ${displaySent}</div>
+                        <div><span class="translation-blind" onclick="toggleTranslation('list-c-${uniqueId}')">📄 해석 보기</span><span class="translation-text" id="trans-list-c-${uniqueId}"> ${displayTrans}</span></div>
+                    </div>
+                </div>`;
+            });
+            completeContainer.innerHTML = html;
+        }
+        
+        if(currentStep === 0) {
+            document.getElementById("next-btn").style.display = originalWords.length === 0 ? "none" : "block";
+            document.getElementById("flash-btn").style.display = originalWords.length === 0 ? "none" : "block";
+            document.getElementById("complete-quiz-btn").style.display = completedWords.length === 0 ? "none" : "block";
+        }
+    }
+
+    function addWord(type) {
+        const eng = document.getElementById("new-eng").value.trim();
+        const kor = document.getElementById("new-kor").value.trim();
+        let sentence = document.getElementById("new-sentence").value.trim();
+        let translation = document.getElementById("new-translation").value.trim();
+        if (!eng || !kor) return alert("영어 단어와 뜻을 입력하세요!");
+        originalWords.push({ eng, kor, sentence, translation, checked: true, timestamp: Date.now() }); saveToLocalStorage(); updateWordList();
+        document.getElementById("new-eng").value = ""; document.getElementById("new-kor").value = ""; 
+        document.getElementById("new-sentence").value = ""; document.getElementById("new-translation").value = "";
+    }
+
+    function addBulkWords() {
+        const bulkInput = document.getElementById("bulk-input").value.trim();
+        if (!bulkInput) return alert("내용을 입력하세요.");
+        const lines = bulkInput.split('\n'); let count = 0;
+        lines.forEach(line => {
+            const parts = line.split(':');
+            if (parts.length >= 2 && parts[0].trim() && parts[1].trim()) {
+                originalWords.push({ 
+                    eng: parts[0].trim(), 
+                    kor: parts[1].trim(), 
+                    sentence: parts[2] ? parts[2].trim() : "", 
+                    translation: parts[3] ? parts[3].trim() : "", 
+                    checked: true,
+                    timestamp: Date.now() + count
+                });
+                count++;
+            }
+        });
+        if (count > 0) {
+            saveToLocalStorage(); updateWordList(); document.getElementById("bulk-input").value = "";
+            alert(`${count}개 단어가 일괄 등록되었습니다.`);
+        }
+    }
+
+    function clearAllWords(type) {
+        if (!confirm("정말 비우시겠습니까?")) return;
+        if (type === 'test') originalWords = []; else completedWords = [];
+        saveToLocalStorage(); updateWordList();
+    }
+
+    function editWord(type, index) {
+        let list = (type === 'test') ? originalWords : completedWords;
+        const nEng = prompt("단어 수정:", list[index].eng); if (!nEng) return;
+        const nKor = prompt("뜻 수정:", list[index].kor); if (!nKor) return;
+        const nSen = prompt("예문 수정:", list[index].sentence || "");
+        const nTrs = prompt("해석 수정:", list[index].translation || "");
+        list[index].eng = nEng.trim(); list[index].kor = nKor.trim(); 
+        list[index].sentence = nSen.trim(); list[index].translation = nTrs.trim();
+        saveToLocalStorage(); updateWordList();
+    }
+
+    function moveWord(dir, index) {
+        if (dir === 'toComplete') { completedWords.push(originalWords.splice(index, 1)[0]); } else { originalWords.push(completedWords.splice(index, 1)[0]); }
+        saveToLocalStorage(); updateWordList();
+    }
+
+    function deleteWord(type, index) {
+        if (type === 'test') originalWords.splice(index, 1); else completedWords.splice(index, 1);
+        saveToLocalStorage(); updateWordList();
+    }
+
+    function shuffle(array) {
+        let cur = array.length, rand;
+        while (cur != 0) { rand = Math.floor(Math.random() * cur); cur--; [array[cur], array[rand]] = [array[rand], array[cur]]; }
+        return array;
+    }
+
+    function generateMultipleChoices(correctAnswer, currentMode) {
+        let pool = (currentMode === 'complete') ? completedWords : originalWords;
+        let distPool = [...new Set(pool.map(w => w.kor))].filter(k => k !== correctAnswer);
+        distPool = shuffle(distPool); let choices = distPool.slice(0, 3); choices.push(correctAnswer); return shuffle(choices);
+    }
+
+    function startTimerForCard() {
+        stopTimer(); isTimeoutActive = false;
+        const speedOption = document.getElementById("use-speed-timer").checked;
+        if (!speedOption) return;
+
+        const timerContainer = document.getElementById("quiz-timer-container");
+        const timerBar = document.getElementById("quiz-timer-bar");
+        timerContainer.style.display = "block"; timerBar.style.transform = "scaleX(1)";
+
+        const startTime = Date.now(); const endTime = startTime + (TIME_LIMIT * 1000);
+
+        timerInterval = setInterval(() => {
+            const now = Date.now();
+            const progress = Math.max(0, (endTime - now) / (TIME_LIMIT * 1000));
+            timerBar.style.transform = `scaleX(${progress})`;
+            if (now >= endTime) { stopTimer(); handleTimeout(); }
+        }, 100);
+    }
+
+    function stopTimer() { if (timerInterval) { clearInterval(timerInterval); timerInterval = null; } document.getElementById("quiz-timer-container").style.display = "none"; }
+
+    function handleTimeout() {
+        isTimeoutActive = true;
+        const currentActiveCard = document.querySelector(`.quiz-card-wrapper[data-card-idx="${currentCardIndex}"]`);
+        if(currentActiveCard) {
+            const badge = currentActiveCard.querySelector(".timeout-badge");
+            if(badge) badge.style.display = "block";
+            currentActiveCard.querySelectorAll("input[type='text']").forEach(el => el.disabled = true);
+            currentActiveCard.querySelectorAll(".option-btn, .word-bubble").forEach(el => el.style.pointerEvents = "none");
+        }
+        alert("⏱️ 10초 제한 시간이 초과되었습니다! 다음 문제로 넘어가세요.");
+    }
+
+    function selectOption(quizIdx, optionText, btnEl) {
+        if (isTimeoutActive) return;
+        userAnswers[quizIdx].kor = optionText;
+        const parent = btnEl.parentElement; parent.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('selected'));
+        btnEl.classList.add('selected');
+    }
+
+    function clickScrambleBubble(quizIdx, wordText, bubbleEl) {
+        if (isTimeoutActive || bubbleEl.classList.contains('used')) return;
+        bubbleEl.classList.add('used');
+        const inputEl = document.getElementById(`scramble-input-${quizIdx}`);
+        let currentVal = inputEl.value.trim();
+        inputEl.value = currentVal ? currentVal + " " + wordText : wordText;
+    }
+
+    function clearScrambleInput(quizIdx) {
+        if (isTimeoutActive) return;
+        document.getElementById(`scramble-input-${quizIdx}`).value = "";
+        const container = document.getElementById(`bubble-container-${quizIdx}`);
+        container.querySelectorAll('.word-bubble').forEach(b => b.classList.remove('used'));
+    }
+
+    function makeBlankSentence(sentence, word) {
+        const regex = new RegExp(`\\b${word}\\b`, 'gi');
+        if(!regex.test(sentence)) { const fallback = new RegExp(word, 'gi'); return sentence.replace(fallback, "_______"); }
+        return sentence.replace(regex, "_______");
+    }
+
+    function startFlashcardMode() {
+        let source = (currentQuizMode === 'complete') ? completedWords : originalWords;
+        let filtered = source.filter(w => w.checked !== false);
+        if(filtered.length === 0) return alert("선택된 단어가 없습니다.");
+        currentStep = -1; quizWords = shuffle(JSON.parse(JSON.stringify(filtered))); flashIndex = 0; renderStep();
+    }
+
+    function prevFlash() { if(flashIndex > 0) { flashIndex--; renderStep(); } }
+    function nextFlash() { if(flashIndex < quizWords.length - 1) { flashIndex++; renderStep(); } }
+
+    function showCardIndex(idx) {
+        currentCardIndex = idx;
+        document.querySelectorAll(".quiz-card-wrapper").forEach((card, i) => {
+            card.classList.toggle("active", i === idx);
+        });
+        
+        if (currentStep === 1 && selectedQuizType !== '4step') {
+            startTimerForCard();
+        }
+
+        // 신규 추가: 카드 활성화 시 입력 input 창 자동 포커스 처리 
+        setTimeout(() => {
+            const activeInput = document.querySelector(`.quiz-card-wrapper.active input[type='text']:not([readonly])`);
+            if(activeInput) activeInput.focus();
+        }, 50);
+    }
+
+    // 신규: 키보드 엔터 숏컷 가로채기 핸들러 함수
+    function handleQuizInputKeyDown(event, index) {
+        if (event.key === "Enter") {
+            event.preventDefault(); // 엔터 기본 개행 제출 막기
+            processCardNext(index);  // 다음 버튼 시스템 강제 트리거
+        }
+    }
+
+    function processCardNext(index) {
+        stopTimer();
+        if(selectedQuizType === 'sentence') {
+            const targetInput = document.getElementById(`eng-${index}`);
+            if(targetInput) userAnswers[index].eng = targetInput.value;
+        } else if(selectedQuizType === 'scramble') {
+            const targetInput = document.getElementById(`scramble-input-${index}`);
+            if(targetInput) userAnswers[index].sentence = targetInput.value;
+        } else if(selectedQuizType === '4step') {
+            if(currentStep === 1) { const targetInput = document.getElementById(`kor-${index}`); if(targetInput) userAnswers[index].kor = targetInput.value; }
+            if(currentStep === 2) { const targetInput = document.getElementById(`eng-${index}`); if(targetInput) userAnswers[index].eng = targetInput.value; }
+            if(currentStep === 4) { const targetInput = document.getElementById(`re-kor-${index}`); if(targetInput) reviewAnswers[index].kor = targetInput.value; }
+            if(currentStep === 5) { const targetInput = document.getElementById(`re-eng-${index}`); if(targetInput) reviewAnswers[index].eng = targetInput.value; }
+        }
+
+        if(index < quizWords.length - 1) {
+            showCardIndex(index + 1);
+        } else {
+            if (selectedQuizType === 'choice' || selectedQuizType === 'sentence' || selectedQuizType === 'scramble') {
+                currentStep = 3; 
+            } else {
+                if (currentStep === 1) currentStep = 2;
+                else if (currentStep === 2) currentStep = 3;
+                else if (currentStep === 4) currentStep = 5;
+                else if (currentStep === 5) currentStep = 6;
+            }
+            renderStep();
+        }
+    }
+
+    function renderStep() {
+        const content = document.getElementById("quiz-content");
+        const nextBtn = document.getElementById("next-btn");
+        const compQuizBtn = document.getElementById("complete-quiz-btn");
+        const flashBtn = document.getElementById("flash-btn");
+        const managerView = document.getElementById("manager-view");
+        const modeBox = document.getElementById("mode-box");
+        const aiScanView = document.getElementById("ai-scan-view");
+        const stepBar = document.getElementById("step-bar");
+        const calBox = document.getElementById("calendar-box");
+        const backupBox = document.getElementById("backup-box");
+        const dashBox = document.getElementById("dashboard-box");
+        
+        let html = "";
+
+        if (currentStep === -1) {
+            managerView.style.display = "none"; modeBox.style.display = "none"; aiScanView.style.display = "none"; stepBar.style.display = "none"; calBox.style.display = "none"; backupBox.style.display = "none"; dashBox.style.display = "none";
+            nextBtn.style.display = "none"; compQuizBtn.style.display = "none";
+            flashBtn.style.display = "block"; flashBtn.innerText = "🏃 암기 종료";
+            flashBtn.onclick = () => { currentStep = 0; renderStep(); };
+
+            const word = quizWords[flashIndex]; speak(word.eng);
+            let displaySent = word.sentence; let displayTrans = word.translation;
+            if(!displaySent) { let auto = getLocalData(word.eng, word.kor); displaySent = auto.sentence; displayTrans = auto.translation; }
+
+            html = `
+                <p class="hint">🎯 카드를 클릭하면 뒤집어집니다. (${flashIndex + 1}/${quizWords.length})</p>
+                <div class="flashcard-wrapper" onclick="document.getElementById('fcard').classList.toggle('flipped')">
+                    <div class="flashcard-inner" id="fcard">
+                        <div class="card-front"><div>${word.eng}</div></div>
+                        <div class="card-back">${word.kor}</div>
+                    </div>
+                </div>
+                <div style="text-align:center; margin-bottom:15px; font-size:14px; padding:0 20px;">
+                    <div style="font-style:italic; color:var(--text-sub);">📖 ${displaySent}</div>
+                    <div style="margin-top:5px;"><span class="translation-blind" onclick="event.stopPropagation(); toggleTranslation('flash-${flashIndex}')">📄 해석 보기</span><span class="translation-text" id="trans-flash-${flashIndex}"> ${displayTrans}</span></div>
+                </div>
+                <div class="flash-controls">
+                    <button class="btn-add" onclick="prevFlash()" ${flashIndex===0?'disabled':''}>◀ 이전</button>
+                    <button class="btn" style="background:#4a90e2; width:auto; padding:10px 15px;" onclick="speak('${word.eng}')">🔊 발음</button>
+                    <button class="btn-add" onclick="nextFlash()" ${flashIndex===quizWords.length-1?'disabled':''}>다음 ▶</button>
+                </div>
+            `;
+            content.innerHTML = html; return;
+        }
+
+        if (currentStep === 0) {
+            managerView.style.display = "block"; modeBox.style.display = "flex"; aiScanView.style.display = "block"; stepBar.style.display = "none"; calBox.style.display = "block"; backupBox.style.display = "block"; dashBox.style.display = "grid";
+            nextBtn.style.display = originalWords.length === 0 ? "none" : "block";
+            flashBtn.style.display = originalWords.length === 0 ? "none" : "block";
+            compQuizBtn.style.display = completedWords.length === 0 ? "none" : "block";
+            nextBtn.innerText = "📋 테스트 단어 퀴즈 시작"; flashBtn.innerText = "🃏 플래시 카드 암기 시작";
+            flashBtn.onclick = () => nextStep('test'); content.innerHTML = ""; 
+            calculateStatistics();
+            return;
+        }
+
+        managerView.style.display = "none"; modeBox.style.display = "none"; aiScanView.style.display = "none"; calBox.style.display = "none"; backupBox.style.display = "none"; flashBtn.style.display = "none"; compQuizBtn.style.display = "none"; dashBox.style.display = "none";
+        
+        if (currentStep === 3 || currentStep === 6) { nextBtn.style.display = "block"; } else { nextBtn.style.display = "none"; }
+
+        const speedOptionOn = document.getElementById("use-speed-timer").checked;
+
+        if(selectedQuizType === '4step') {
+            stepBar.style.display = "flex";
+            document.querySelectorAll('.step').forEach((el, idx) => { el.classList.toggle('active', idx + 1 === currentStep); });
+        } else { stepBar.style.display = "none"; }
+
+        if (currentStep === 1 || currentStep === 2 || currentStep === 4 || currentStep === 5) {
+            
+            if (selectedQuizType === 'choice') {
+                quizWords.forEach((word, i) => {
+                    let optionsHtml = word.options.map(opt => `<button class="option-btn" onclick="selectOption(${i}, '${opt}', this)">${opt}</button>`).join("");
+                    let isLast = i === quizWords.length - 1;
+                    html += `<div class="quiz-card-wrapper" data-card-idx="${i}">
+                        <p class="hint">${speedOptionOn ? '⏱️ 10초 스피드 퀴즈' : '🎯 객관식 퀴즈'}: 올바른 뜻을 고르세요. (${i+1}/${quizWords.length})</p>
+                        <div class="word-card">
+                            <div class="timeout-badge">TIMEOUT</div>
+                            <label><span style="color:var(--primary); font-size:22px;">${word.eng}</span></label>
+                            <div class="quiz-options">${optionsHtml}</div>
+                        </div>
+                        <button class="btn btn-primary" onclick="processCardNext(${i})">${isLast ? '📊 결과 채점하기':'다음 문제 ▶'}</button>
+                    </div>`;
+                });
+            }
+            else if (selectedQuizType === 'sentence') {
+                quizWords.forEach((word, i) => {
+                    const blankSent = makeBlankSentence(word.targetSentence, word.eng);
+                    let isLast = i === quizWords.length - 1;
+                    html += `<div class="quiz-card-wrapper" data-card-idx="${i}">
+                        <p class="hint">${speedOptionOn ? '⏱️ 10초 스피드 퀴즈' : '🎯 문맥 빈칸 채우기'} (${i+1}/${quizWords.length})</p>
+                        <div class="word-card">
+                            <div class="timeout-badge">TIMEOUT</div>
+                            <label><span style="color:var(--complete); font-size:16px;">뜻: ${word.kor}</span></label>
+                            <div class="sentence-box">${blankSent}</div>
+                            <div style="margin-bottom:12px;"><span class="translation-blind" onclick="toggleTranslation('quiz-sent-${i}')">📄 해석 힌트 보기</span><span class="translation-text" id="trans-quiz-sent-${i}"> ${word.targetTranslation}</span></div>
+                            <input type="text" id="eng-${i}" placeholder="영어 단어 입력 (Enter로 다음 이동)" autocomplete="off" autocapitalize="none" onkeydown="handleQuizInputKeyDown(event, ${i})">
+                        </div>
+                        <button class="btn btn-primary" onclick="processCardNext(${i})">${isLast ? '📊 결과 채점하기':'다음 문제 ▶'}</button>
+                    </div>`;
+                });
+            }
+            else if (selectedQuizType === 'scramble') {
+                quizWords.forEach((word, i) => {
+                    let bubblesHtml = word.scrambleWords.map(w => `<span class="word-bubble" onclick="clickScrambleBubble(${i}, '${w.replace(/'/g, "\\'")}', this)">${w}</span>`).join("");
+                    let isLast = i === quizWords.length - 1;
+                    html += `<div class="quiz-card-wrapper" data-card-idx="${i}">
+                        <p class="hint">${speedOptionOn ? '⏱️ 10초 스피드 퀴즈' : '🎯 로컬 어순 배열'} (${i+1}/${quizWords.length})</p>
+                        <div class="word-card">
+                            <div class="timeout-badge">TIMEOUT</div>
+                            <label><span style="color:var(--success); font-size:16px;">뜻: ${word.kor}</span></label>
+                            <div class="scramble-container" id="bubble-container-${i}">${bubblesHtml}</div>
+                            <div style="margin-bottom:12px;"><span class="translation-blind" onclick="toggleTranslation('quiz-scram-${i}')">📄 해석 힌트 보기</span><span class="translation-text" id="trans-quiz-scram-${i}"> ${word.targetTranslation}</span></div>
+                            <div style="display:flex; gap:6px;">
+                                <input type="text" id="scramble-input-${i}" placeholder="버블 조립창" readonly>
+                                <button class="filter-sub-btn" onclick="clearScrambleInput(${i})">🔄 초기화</button>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" onclick="processCardNext(${i})">${isLast ? '📊 문장 채점하기':'다음 문제 ▶'}</button>
+                    </div>`;
+                });
+            }
+            else {
+                if (currentStep === 1) {
+                    quizWords.forEach((word, i) => {
+                        let isLast = i === quizWords.length - 1;
+                        html += `<div class="quiz-card-wrapper" data-card-idx="${i}">
+                            <p class="hint">💡 4단계 중 1단계: 뜻 적기 (${i+1}/${quizWords.length})</p>
+                            <div class="word-card">
+                                <label><span style="color:var(--primary); font-size:22px;">${word.eng}</span></label>
+                                <input type="text" id="kor-${i}" placeholder="뜻 입력 (Enter로 다음 이동)" autocomplete="off" onkeydown="handleQuizInputKeyDown(event, ${i})">
+                            </div>
+                            <button class="btn btn-primary" onclick="processCardNext(${i})">${isLast ? '2단계 철자 쓰기로 이동 ➔':'다음 문제 ▶'}</button>
+                        </div>`;
+                    });
+                } 
+                else if (currentStep === 2) {
+                    quizWords.forEach((word, i) => {
+                        let isLast = i === quizWords.length - 1;
+                        html += `<div class="quiz-card-wrapper" data-card-idx="${i}">
+                            <p class="hint">💡 4단계 중 2단계: 철자 적기 (${i+1}/${quizWords.length})</p>
+                            <div class="word-card">
+                                <label><span style="color:var(--primary); font-size:20px;">${userAnswers[i].kor || '(미입력)'}</span></label>
+                                <input type="text" id="eng-${i}" placeholder="영어 단어 입력 (Enter로 다음 이동)" autocomplete="off" autocapitalize="none" onkeydown="handleQuizInputKeyDown(event, ${i})">
+                            </div>
+                            <button class="btn btn-primary" onclick="processCardNext(${i})">${isLast ? '3단계 오답 체크하기 ➔':'다음 문제 ▶'}</button>
+                        </div>`;
+                    });
+                }
+                else if (currentStep === 4) {
+                    wrongWords.forEach((word, i) => {
+                        let isLast = i === wrongWords.length - 1;
+                        html += `<div class="quiz-card-wrapper" data-card-idx="${i}">
+                            <p class="hint">🔥 4단계: 오답 뜻 복습 쓰기 (${i+1}/${wrongWords.length})</p>
+                            <div class="word-card">
+                                <label><span style="color:var(--danger); font-size:22px;">${word.eng}</span></label>
+                                <input type="text" id="re-kor-${i}" placeholder="올바른 뜻 재입력 (Enter로 다음)" autocomplete="off" onkeydown="handleQuizInputKeyDown(event, ${i})">
+                            </div>
+                            <button class="btn btn-primary" onclick="processCardNext(${i})">${isLast ? '오답 철자 적기로 이동 ➔':'다음 문제 ▶'}</button>
+                        </div>`;
+                    });
+                }
+                else if (currentStep === 5) {
+                    wrongWords.forEach((word, i) => {
+                        let isLast = i === wrongWords.length - 1;
+                        html += `<div class="quiz-card-wrapper" data-card-idx="${i}">
+                            <p class="hint">🔥 오답 철자 재복습 쓰기 (${i+1}/${wrongWords.length})</p>
+                            <div class="word-card">
+                                <label><span style="color:var(--dark); font-size:20px;">${word.kor}</span></label>
+                                <input type="text" id="re-eng-${i}" placeholder="올바른 철자 재입력 (Enter로 다음)" autocomplete="off" autocapitalize="none" onkeydown="handleQuizInputKeyDown(event, ${i})">
+                            </div>
+                            <button class="btn btn-primary" onclick="processCardNext(${i})">${isLast ? '재학습 결과 확인 ➔':'다음 문제 ▶'}</button>
+                        </div>`;
+                    });
+                }
+            }
+            content.innerHTML = html;
+            showCardIndex(0);
+        } 
+        else if (currentStep === 3) {
+            stopTimer(); wrongWords = []; passedWordsInQuiz = [];
+            quizWords.forEach((word, i) => {
+                let isKorWrong = userAnswers[i].kor.trim() !== word.kor;
+                let isEngWrong = userAnswers[i].eng.trim().toLowerCase() !== word.eng.toLowerCase();
+                let isSentenceWrong = userAnswers[i].sentence.trim().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").toLowerCase() !== word.targetSentence.trim().replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").toLowerCase();
+                
+                if(selectedQuizType === 'choice') isEngWrong = false;
+                if(selectedQuizType === 'sentence') isKorWrong = false;
+                if(selectedQuizType === 'scramble') { isKorWrong = false; isEngWrong = isSentenceWrong; }
+
+                if (isKorWrong || isEngWrong) wrongWords.push(word); else passedWordsInQuiz.push(word);
+
+                let resHtml = "";
+                if(selectedQuizType === 'choice') {
+                    resHtml = `<p>정답: ${word.kor} / 선택: ${isKorWrong ? `<span class="wrong-text">${userAnswers[i].kor || '미선택'}</span>` : `<span class="correct-text">${userAnswers[i].kor} ⭕</span>`}</p>`;
+                } else if(selectedQuizType === 'sentence') {
+                    resHtml = `<p>정답: <span class="correct-text">${word.eng}</span> / 입력: ${isEngWrong ? `<span class="wrong-text">${userAnswers[i].eng || '미입력'}</span>` : `<span class="correct-text">${userAnswers[i].eng} ⭕</span>`}</p>`;
+                } else if(selectedQuizType === 'scramble') {
+                    resHtml = `<p style="font-size:13px;"><b>모범 문장:</b> <span class="correct-text">${word.targetSentence}</span></p>
+                               <p style="font-size:13px;"><b>나의 조립:</b> ${isSentenceWrong ? `<span class="wrong-text">${userAnswers[i].sentence || '미조립'}</span> ❌` : `<span class="correct-text">${userAnswers[i].sentence} ⭕</span>`}</p>`;
+                } else {
+                    resHtml = `<p>뜻: ${isKorWrong ? `<span class="wrong-text">${userAnswers[i].kor || '미입력'}</span> ➔ ${word.kor}` : `<span class="correct-text">${word.kor} ⭕</span>`}</p>
+                               <p>철자: ${isEngWrong ? `<span class="wrong-text">${userAnswers[i].eng || '미입력'}</span> ➔ ${word.eng}` : `<span class="correct-text">${word.eng} ⭕</span>`}</p>`;
+                }
+
+                html += `<div class="word-card">
+                    <label>${i + 1}. <b>${word.eng}</b></label>${resHtml}
+                    <div class="hint-container" style="margin-top:8px;">
+                        <div>📖 ${word.targetSentence}</div>
+                        <div><span class="translation-blind" onclick="toggleTranslation('quiz-res-${i}')">📄 해석 보기</span><span class="translation-text" id="trans-quiz-res-${i}"> ${word.targetTranslation}</span></div>
+                    </div>
+                </div>`;
+            });
+            
+            // 신규: 마지막 퀴즈 성적 기록 가공 대입
+            const correctCount = quizWords.length - wrongWords.length;
+            lastQuizScore = `${correctCount}/${quizWords.length}`;
+            localStorage.setItem("last_quiz_score", lastQuizScore);
+
+            content.innerHTML = html;
+            if (wrongWords.length > 0) nextBtn.innerText = `4단계: 오답 재학습 (${wrongWords.length}개) ➔`;
+            else nextBtn.innerText = "🏁 테스트 종료 및 학습 결과 반영";
+        } 
+        else if (currentStep === 6) {
+            wrongWords.forEach((word, i) => {
+                html += `<div class="word-card">
+                    <label>${word.eng}</label>
+                    <p>뜻 복습: ${reviewAnswers[i].kor === word.kor ? '⭕':'❌'} (입력: ${reviewAnswers[i].kor} / 정답: ${word.kor})</p>
+                    <p>철자 복습: ${reviewAnswers[i].eng.toLowerCase() === word.eng.toLowerCase() ? '⭕':'❌'} (입력: ${reviewAnswers[i].eng} / 정답: ${word.eng})</p>
+                </div>`;
+            });
+            content.innerHTML = html;
+            nextBtn.innerText = "🏁 테스트 완료하기";
+        }
+        window.scrollTo(0,0);
+    }
+
+    function plantGrass() {
+        const today = new Date().toISOString().split('T')[0];
+        if (!grassDates.includes(today)) { grassDates.push(today); saveToLocalStorage(); renderCalendar(); }
+    }
+
+    function renderCalendar() {
+        const container = document.getElementById("calendar-days-container");
+        const date = new Date(); const year = date.getFullYear(); const month = date.getMonth();
+        document.getElementById("calendar-title").innerText = `📅 ${year}년 ${month + 1}월 학습 잔디밭`;
+        const firstDay = new Date(year, month, 1).getDay(); const lastDay = new Date(year, month + 1, 0).getDate();
+        let html = "";
+        for (let i = 0; i < firstDay; i++) { html += `<div></div>`; }
+        for (let d = 1; d <= lastDay; d++) {
+            const curStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+            html += `<div class="calendar-day ${grassDates.includes(curStr) ? 'has-grass':''}">${d}</div>`;
+        }
+        container.innerHTML = html;
+    }
+
+    function handleQuizEnd() {
+        plantGrass();
+        if (currentQuizMode === 'test' && passedWordsInQuiz.length > 0) {
+            if (confirm(`🎉 통과한 단어 ${passedWordsInQuiz.length}개를 완료 보관함으로 보낼까요?`)) {
+                passedWordsInQuiz.forEach(word => {
+                    const idx = originalWords.findIndex(w => w.eng === word.eng);
+                    if (idx !== -1) completedWords.push(originalWords.splice(idx, 1)[0]);
+                });
+            }
+        }
+        currentStep = 0; saveToLocalStorage(); updateWordList(); renderStep();
+    }
+
+    function nextStep(mode) {
+        if (currentStep === 0) {
+            currentQuizMode = mode;
+            selectedQuizType = document.getElementById("quiz-mode-select").value;
+            let source = (currentQuizMode === 'complete') ? completedWords : originalWords;
+            let filtered = source.filter(w => w.checked !== false);
+            if(filtered.length === 0) return alert("선택된 단어가 없습니다.");
+            if (selectedQuizType === 'choice' && source.length < 4) return alert("객관식은 폴더 내 단어가 최소 4개 이상이어야 보기가 구성됩니다.");
+
+            let shuffledSource = shuffle(JSON.parse(JSON.stringify(filtered)));
+            
+            const limitVal = document.getElementById("quiz-limit-select").value;
+            if(limitVal !== 'all') {
+                const limitNum = parseInt(limitVal, 10);
+                shuffledSource = shuffledSource.slice(0, limitNum);
+            }
+
+            quizWords = shuffledSource;
+            userAnswers = quizWords.map(() => ({ kor: "", eng: "", sentence: "" }));
+            
+            quizWords.forEach(w => {
+                let targetS = w.sentence; let targetT = w.translation;
+                if(!targetS) { let auto = getLocalData(w.eng, w.kor); targetS = auto.sentence; targetT = auto.translation; }
+                w.targetSentence = targetS; w.targetTranslation = targetT;
+
+                if (selectedQuizType === 'choice') {
+                    w.options = generateMultipleChoices(w.kor, currentQuizMode);
+                } else if (selectedQuizType === 'scramble') {
+                    let cleanWords = targetS.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").split(/\s+/);
+                    w.scrambleWords = shuffle([...cleanWords]);
+                }
+            });
+            
+            currentStep = 1;
+            renderStep();
+        } 
+        else if (currentStep === 3) {
+            if (wrongWords.length > 0) { reviewAnswers = wrongWords.map(() => ({ kor: "", eng: "" })); currentStep = 4; renderStep(); }
+            else { handleQuizEnd(); }
+        } else if (currentStep === 6) {
+            handleQuizEnd();
+        }
+    }
+    
+    updateWordList();
+    renderCalendar();
+</script>
+</body>
+</html>
